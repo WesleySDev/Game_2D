@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 
 export class GameScene extends Phaser.Scene {
   player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
   constructor() {
     super("GameScene");
@@ -9,24 +10,25 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     // Carrega os assets do jogo
-    this.load.image("player", "/assets/player.svg");
-    this.load.spritesheet("swordsman1", "/assets/swordsman1.png", {
+    this.load.spritesheet("swordsman1", "./assets/swordsman1.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
 
-    this.load.spritesheet("swordsman2", "/assets/swordsman2.png", {
+    this.load.spritesheet("swordsman2", "./assets/swordsman2.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
-    this.load.spritesheet("swordsman3", "/assets/swordsman3.png", {
+    this.load.spritesheet("swordsman3", "./assets/swordsman3.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
+    this.load.image("tiles", "./assets/medieval_tilesheet.png");
+    this.load.tilemapTiledJSON("map", "./assets/map.json");
   }
 
   create() {
-    // Criar animações para os sprites
+    // Animações
     this.anims.create({
       key: "walk1",
       frames: this.anims.generateFrameNumbers("swordsman1", {
@@ -57,14 +59,32 @@ export class GameScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // Adicionar o player na tela usando o sprite animado
-    this.player = this.physics.add.sprite(400, 300, "swordsman1");
+    // Carrega o mapa
+    const map = this.make.tilemap({ key: "map" });
+
+    // 🔧 Nome do tileset no Tiled é "assets"
+    const tileset = map.addTilesetImage("assets", "tiles");
+
+    // Usa a camada "ground" (nome igual ao Tiled)
+    const ground = map.createLayer("ground", tileset, 0, 0);
+    ground.setCollisionByProperty({ collides: true });
+
+    // Player (ajustado para tamanho proporcional ao mapa)
+    this.player = this.physics.add.sprite(100, 100, "swordsman1");
+    this.player.setScale(1); // como o tile é 32x32, reduz o tamanho do player
     this.player.setCollideWorldBounds(true);
     this.player.play("walk1");
 
-    // input
-    this.cursors = this.input.keyboard.createCursorKeys(); // Criar as teclas de cursor
+    this.physics.add.collider(this.player, ground);
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+    // Faz a câmera seguir o player
+    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    this.cameras.main.startFollow(this.player);
   }
+
   update() {
     // Movimentação do jogador
     let isMoving = false; // Se o jogador está se movendo
