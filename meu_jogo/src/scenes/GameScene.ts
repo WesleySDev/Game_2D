@@ -29,31 +29,39 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     // Animações
+    const anims = this.anims;
     this.anims.create({
-      key: "walk1",
+      key: "left",
+      frames: this.anims.generateFrameNumbers("swordsman1", {
+        start: 28,
+        end: 36,
+      }),
+      frameRate: 10,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "right",
+      frames: this.anims.generateFrameNumbers("swordsman1", {
+        start: 19,
+        end: 27,
+      }),
+      frameRate: 10,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "up",
       frames: this.anims.generateFrameNumbers("swordsman1", {
         start: 0,
-        end: 7,
+        end: 8,
       }),
       frameRate: 10,
       repeat: -1,
     });
-
     this.anims.create({
-      key: "walk2",
-      frames: this.anims.generateFrameNumbers("swordsman2", {
-        start: 0,
-        end: 7,
-      }),
-      frameRate: 10,
-      repeat: -1,
-    });
-
-    this.anims.create({
-      key: "walk3",
-      frames: this.anims.generateFrameNumbers("swordsman3", {
-        start: 0,
-        end: 7,
+      key: "down",
+      frames: this.anims.generateFrameNumbers("swordsman1", {
+        start: 10,
+        end: 18,
       }),
       frameRate: 10,
       repeat: -1,
@@ -68,26 +76,37 @@ export class GameScene extends Phaser.Scene {
     // Usa a camada "ground" (nome igual ao Tiled)
     const ground = map.createLayer("ground", tileset, 0, 0);
     ground.setCollisionByProperty({ collides: true });
+    const fluter = map.createLayer("fluter", tileset, 0, 0);
+    fluter?.setDepth(10);
+
+    const objectCollider = map.createLayer("Object", tileset, 0, 0);
 
     // Player (ajustado para tamanho proporcional ao mapa)
-    this.player = this.physics.add.sprite(100, 100, "swordsman1");
-    this.player.setScale(1); // como o tile é 32x32, reduz o tamanho do player
+
+    this.player = this.physics.add.sprite(200, 200, "swordsman1");
+    this.player.setScale(0.7); // como o tile é 32x32, reduz o tamanho do player
     this.player.setCollideWorldBounds(true);
-    this.player.play("walk1");
+    this.player.play(anims);
 
     this.physics.add.collider(this.player, ground);
+    this.physics.add.collider(this.player, objectCollider);
+    objectCollider?.setCollisionByProperty({ colider: true });
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     // Faz a câmera seguir o player
-    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-    this.cameras.main.startFollow(this.player);
+    const camera = this.cameras.main;
+    camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    camera.startFollow(this.player);
+    camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
   }
 
   update() {
     // Movimentação do jogador
     let isMoving = false; // Se o jogador está se movendo
+
+    const previousVelocity = this.player.body.velocity.clone();
 
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-160);
@@ -113,11 +132,13 @@ export class GameScene extends Phaser.Scene {
 
     // Trocar animação com base na tecla pressionada
     if (this.cursors.space.isDown) {
-      this.player.play("walk3", true);
+      this.player.play("left", true);
     } else if (this.cursors.shift.isDown) {
-      this.player.play("walk2", true);
+      this.player.play("right", true);
     } else if (isMoving) {
-      this.player.play("walk1", true);
+      this.player.play("up", true);
+    } else if (this.cursors.down.isDown) {
+      this.player.play("down", true);
     } else {
       // Parar a animação quando não estiver se movendo
       this.player.anims.pause();
