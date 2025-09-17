@@ -1,8 +1,10 @@
 import * as Phaser from "phaser";
-
+import { createPlayer, loadSprites } from "./player";
+import { createControls, configControls } from "./controls";
 export class GameScene extends Phaser.Scene {
   player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  controls!: Phaser.Types.Input.Keyboard.CursorKeys;
 
   startX = 200; // posição padrão
   startY = 100;
@@ -19,12 +21,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet("swordsman1", "/assets/sprites/swordsman1.png", {
-      frameWidth: 64,
-      frameHeight: 64,
-    });
     this.load.image("tiles", "/assets/tilesets/tilemap_packed.png");
     this.load.tilemapTiledJSON("map", "/assets/maps/map.json");
+    loadSprites(this);
   }
 
   create() {
@@ -39,14 +38,9 @@ export class GameScene extends Phaser.Scene {
     collider?.setCollisionByProperty({ collider: true });
 
     // Criação do player
-    this.player = this.physics.add.sprite(
-      this.startX,
-      this.startY,
-      "swordsman1"
-    );
-    this.player.setCollideWorldBounds(true);
-    this.player.setSize(16, 16);
-    this.player.body.setOffset(16, 32);
+
+    this.player = createPlayer(this);
+    this.player.anims.play("Player_idle", true);
 
     this.physics.add.collider(this.player, collider);
     this.physics.add.collider(this.player, ground);
@@ -59,14 +53,14 @@ export class GameScene extends Phaser.Scene {
     // Câmera
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.startFollow(this.player);
+    this.cameras.main.setZoom(1.5);
 
     // Input
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.controls = createControls(this);
   }
 
   update() {
-    this.updatePlayerMovement();
-
     // Transição para o castelo
     // Coordenadas e tamanho do retângulo de transição
     const transitionX = 535;
@@ -89,21 +83,6 @@ export class GameScene extends Phaser.Scene {
     graphics.fillStyle(0xff0000, 0.5); // vermelho semitransparente
     graphics.fillRect(535, 428, 50, 50); // x, y, largura, altura
     */
-  }
-
-  private updatePlayerMovement() {
-    const speed = 160;
-    this.player.setVelocity(0);
-
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-speed);
-      this.player.flipX = true;
-    } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(speed);
-      this.player.flipX = false;
-    }
-
-    if (this.cursors.up.isDown) this.player.setVelocityY(-speed);
-    else if (this.cursors.down.isDown) this.player.setVelocityY(speed);
+    configControls(this.player, this.controls, this);
   }
 }

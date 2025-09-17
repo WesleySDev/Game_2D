@@ -16,9 +16,9 @@ export class CastleScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet("swordsman1", "/assets/sprites/swordsman1.png", {
-      frameWidth: 64,
-      frameHeight: 64,
+    this.load.spritesheet("Player", "/assets/sprites/Player.png", {
+      frameWidth: 32,
+      frameHeight: 32,
     });
     this.load.image(
       "castleTiles",
@@ -41,19 +41,16 @@ export class CastleScene extends Phaser.Scene {
     collider?.setCollisionByProperty({ collider: true });
 
     // Player
-    this.player = this.physics.add.sprite(
-      this.startX,
-      this.startY,
-      "swordsman1"
-    );
+    this.player = this.physics.add.sprite(this.startX, this.startY, "Player");
     this.player.setCollideWorldBounds(true);
     this.player.setSize(16, 16);
-    this.player.body.setOffset(16, 32);
+    this.player.body.setOffset(7, 10);
 
     this.physics.add.collider(this.player, collider);
     this.physics.add.collider(this.player, ground);
 
     // Câmera
+    this.cameras.main.setZoom(1.5);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.startFollow(this.player);
 
