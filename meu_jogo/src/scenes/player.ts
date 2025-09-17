@@ -1,5 +1,6 @@
-export const createPlayer = (scene: Phaser.Scene) => {
-  const player = scene.physics.add.sprite(200, 200, "Player_idle");
+export const createPlayer = (scene: Phaser.Scene, x: number, y: number) => {
+  const player = scene.physics.add.sprite(x, y, "Player_idle");
+
   (player as any).lastDirection = "down";
   (player as any).isAttacking = false;
   createAnimations(scene);

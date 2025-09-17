@@ -1,25 +1,21 @@
 import * as Phaser from "phaser";
+import { createPlayer, loadSprites } from "./player";
+import { createControls, configControls } from "./controls";
 
 export class CastleScene extends Phaser.Scene {
   player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  startX: number = 100;
-  startY: number = 100;
+  controls!: Phaser.Types.Input.Keyboard.CursorKeys;
+  teleportZone!: Phaser.GameObjects.Zone;
 
+  startX = 50; // posição padrão
+  startY = 280;
   constructor() {
     super("CastleScene");
   }
 
-  init(data: any) {
-    if (data.x !== undefined) this.startX = data.x;
-    if (data.y !== undefined) this.startY = data.y;
-  }
-
   preload() {
-    this.load.spritesheet("Player", "/assets/sprites/Player.png", {
-      frameWidth: 32,
-      frameHeight: 32,
-    });
+    loadSprites(this);
     this.load.image(
       "castleTiles",
       "/assets/tilesets/tilemap_packed_dungeon.png"
@@ -40,62 +36,34 @@ export class CastleScene extends Phaser.Scene {
     // Configura colisões
     collider?.setCollisionByProperty({ collider: true });
 
-    // Player
-    this.player = this.physics.add.sprite(this.startX, this.startY, "Player");
-    this.player.setCollideWorldBounds(true);
-    this.player.setSize(16, 16);
-    this.player.body.setOffset(7, 10);
+    this.player = createPlayer(this, this.startX, this.startY);
+    this.player.anims.play("Player_idle", true);
+    // teleport zone
+    this.teleportZone = this.add.zone(10 + 25, 300 + 25, 50, 50); // centro x,y, largura, altura
+    this.physics.world.enable(this.teleportZone); // habilita física para a zona de teletransporte
+    this.teleportZone.body.setAllowGravity(false); // desativa a gravidade para evitar que o player caia
+    this.teleportZone.body.setImmovable(true);
+
+    // checar overlap
+    this.physics.add.overlap(this.player, this.teleportZone, () => {
+      this.scene.start("GameScene", { x: 550, y: 500 });
+    });
 
     this.physics.add.collider(this.player, collider);
     this.physics.add.collider(this.player, ground);
 
     // Câmera
-    this.cameras.main.setZoom(1.5);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.startFollow(this.player);
+    this.cameras.main.setZoom(1.5);
 
     // Input
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.controls = createControls(this);
+    configControls(this.player, this.controls, this);
   }
 
   update() {
-    this.updatePlayerMovement();
-
-    // Coordenadas e tamanho do retângulo de transição
-    const transitionX = 5;
-    const transitionY = 303;
-    const transitionWidth = 45;
-    const transitionHeight = 30;
-
-    // Checar se o player está dentro do retângulo
-    if (
-      this.player.x > transitionX &&
-      this.player.x < transitionX + transitionWidth &&
-      this.player.y > transitionY &&
-      this.player.y < transitionY + transitionHeight
-    ) {
-      this.scene.start("GameScene", { x: 560, y: 490 });
-    }
-    /* Quadrado de transporte
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0xff0000, 0.5); // vermelho semitransparente
-    graphics.fillRect(5, 303, 45, 30); // x, y, largura, altura
-    */
-  }
-
-  private updatePlayerMovement() {
-    const speed = 160;
-    this.player.setVelocity(0);
-
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-speed);
-      this.player.flipX = true;
-    } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(speed);
-      this.player.flipX = false;
-    }
-
-    if (this.cursors.up.isDown) this.player.setVelocityY(-speed);
-    else if (this.cursors.down.isDown) this.player.setVelocityY(speed);
+    configControls(this.player, this.controls, this);
   }
 }

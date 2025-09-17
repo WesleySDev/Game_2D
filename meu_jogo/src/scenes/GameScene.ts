@@ -38,9 +38,18 @@ export class GameScene extends Phaser.Scene {
     collider?.setCollisionByProperty({ collider: true });
 
     // Criação do player
-
-    this.player = createPlayer(this);
+    this.player = createPlayer(this, this.startX, this.startY);
     this.player.anims.play("Player_idle", true);
+    // teleport zone
+    this.teleportZone = this.add.zone(535 + 25, 428 + 25, 50, 50); // centro x,y, largura, altura
+    this.physics.world.enable(this.teleportZone); // habilita física para a zona de teletransporte
+    this.teleportZone.body.setAllowGravity(false); // desativa a gravidade para evitar que o player caia
+    this.teleportZone.body.setImmovable(true);
+
+    // checar overlap
+    this.physics.add.overlap(this.player, this.teleportZone, () => {
+      this.scene.start("CastleScene", { x: 100, y: 200 });
+    });
 
     this.physics.add.collider(this.player, collider);
     this.physics.add.collider(this.player, ground);
@@ -61,28 +70,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   update() {
-    // Transição para o castelo
-    // Coordenadas e tamanho do retângulo de transição
-    const transitionX = 535;
-    const transitionY = 428;
-    const transitionWidth = 50;
-    const transitionHeight = 50;
-
-    // Checar se o player está dentro do retângulo
-    if (
-      this.player.x > transitionX &&
-      this.player.x < transitionX + transitionWidth &&
-      this.player.y > transitionY &&
-      this.player.y < transitionY + transitionHeight
-    ) {
-      this.scene.start("CastleScene", { x: 50, y: 300 });
-    }
-
-    /*Quadrado de tranporte 
     const graphics = this.add.graphics();
     graphics.fillStyle(0xff0000, 0.5); // vermelho semitransparente
     graphics.fillRect(535, 428, 50, 50); // x, y, largura, altura
-    */
+
     configControls(this.player, this.controls, this);
   }
 }
