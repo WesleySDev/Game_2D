@@ -4,6 +4,10 @@ export const createPlayer = (scene: Phaser.Scene, x: number, y: number) => {
   (player as any).lastDirection = "down";
   (player as any).isAttacking = false;
   createAnimations(scene);
+  player.setScale(0.8);
+  player.setSize(15, 15);
+  player.setOffset(8, 7); // desloca corpo 6px para direita, 16px para baixo
+
   return player;
 };
 
